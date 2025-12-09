@@ -122,6 +122,7 @@ export interface BodyProps {
   defaultFill?: string; // Default: '#f5f5f5'
   defaultStroke?: string; // Default: 'none'
   skinColor?: string; // Default: same as defaultFill (for hair, hands, feet, face)
+  hairColor?: string; // Default: same as skinColor (for hair only)
   defaultStrokeWidth?: number; // Default: 0
 
   // Part filtering
@@ -147,6 +148,7 @@ const Body: React.FC<BodyProps> = ({
   hiddenParts = [],
   defaultFill = '#f5f5f5',
   skinColor = defaultFill,
+  hairColor = skinColor,
   defaultStroke = 'none',
   defaultStrokeWidth = 0,
 }) => {
@@ -226,7 +228,13 @@ const Body: React.FC<BodyProps> = ({
         return '#EBEBE4';
       }
       // Skin parts (hair, hands, feet, face) use skinColor
-      const skinParts = ['hair', 'hand-left', 'hand-right', 'foot-left', 'foot-right', 'head', 'face'];
+      // Hair gets its own color
+      if (bodyPart.slug === 'hair') {
+        return hairColor;
+      }
+
+      // Other skin parts use skinColor
+      const skinParts = ['hand-left', 'hand-right', 'foot-left', 'foot-right', 'head', 'face'];
       if (bodyPart.slug && skinParts.includes(bodyPart.slug)) {
         return skinColor;
       }
@@ -254,7 +262,7 @@ const Body: React.FC<BodyProps> = ({
 
       return undefined; // Fall back to default from getPartStyles
     },
-    [colors, disabledParts, colorScale]
+    [colors, disabledParts, colorScale, skinColor, hairColor]
   );
 
   /**
