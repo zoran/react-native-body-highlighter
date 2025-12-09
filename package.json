@@ -1,6 +1,6 @@
 {
   "name": "@zoran/react-native-body-highlighter",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "description": "Enhanced React Native body highlighter with progress tracking, mirroring, and improved TypeScript support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
