@@ -120,6 +120,7 @@ export interface BodyProps {
 
   // Default styles
   defaultFill?: string; // Default: '#f5f5f5'
+  muscleStroke?: string; // Default: same as border (for muscle separation lines)
   defaultStroke?: string; // Default: 'none'
   skinColor?: string; // Default: same as defaultFill (for hair, hands, feet, face)
   hairColor?: string; // Default: same as skinColor (for hair only)
@@ -145,6 +146,7 @@ const Body: React.FC<BodyProps> = ({
   onBodyPartPress,
   border = '#dfdfdf',
   disabledParts = [],
+  muscleStroke = border,
   hiddenParts = [],
   defaultFill = '#f5f5f5',
   skinColor = defaultFill,
@@ -164,10 +166,10 @@ const Body: React.FC<BodyProps> = ({
   const getPartStyles = useCallback(
     (bodyPart: ExtendedBodyPart): BodyPartStyles => ({
       fill: bodyPart.styles?.fill ?? defaultFill,
-      stroke: bodyPart.styles?.stroke ?? defaultStroke,
+      stroke: bodyPart.styles?.stroke ?? muscleStroke,
       strokeWidth: bodyPart.styles?.strokeWidth ?? defaultStrokeWidth,
     }),
-    [defaultFill, defaultStroke, defaultStrokeWidth]
+    [defaultFill, defaultStroke, defaultStrokeWidth, muscleStroke]
   );
 
   /**
