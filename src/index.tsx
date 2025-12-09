@@ -122,6 +122,7 @@ export interface BodyProps {
   defaultFill?: string; // Default: '#f5f5f5'
   muscleStroke?: string; // Default: same as border (for muscle separation lines)
   defaultStroke?: string; // Default: 'none'
+  backgroundColor?: string; // Background color behind all muscles (fills gaps)
   skinColor?: string; // Default: same as defaultFill (for hair, hands, feet, face)
   hairColor?: string; // Default: same as skinColor (for hair only)
   defaultStrokeWidth?: number; // Default: 0
@@ -148,6 +149,7 @@ const Body: React.FC<BodyProps> = ({
   disabledParts = [],
   muscleStroke = border,
   hiddenParts = [],
+  backgroundColor = "transparent",
   defaultFill = '#f5f5f5',
   skinColor = defaultFill,
   hairColor = defaultFill,
@@ -283,7 +285,7 @@ const Body: React.FC<BodyProps> = ({
       const SvgWrapper = gender === 'male' ? SvgMaleWrapper : SvgFemaleWrapper;
 
       return (
-        <SvgWrapper side={side} scale={scale} border={border}>
+        <SvgWrapper side={side} scale={scale} border={border} backgroundColor={backgroundColor}>
           {mergedBodyParts(bodyToRender).map((bodyPart: ExtendedBodyPart) => {
             const partStyles = getPartStyles(bodyPart);
             const fillColor = getColorToFill(bodyPart);
