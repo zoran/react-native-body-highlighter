@@ -1,223 +1,179 @@
-# react-native-body-highlighter
+# @zoran/react-native-body-highlighter
 
-[![npm](https://img.shields.io/npm/v/react-native-body-highlighter.svg)](https://www.npmjs.com/package/react-native-body-highlighter) [![Downloads](https://img.shields.io/npm/dt/react-native-body-highlighter.svg)](https://www.npmjs.com/package/react-native-body-highlighter)
+Enhanced React Native body highlighter with progress tracking, anatomical mirroring, and comprehensive TypeScript support.
 
-> SVG human body parts highlighter for react-native (Expo compatible).
+## Features
 
-<div style="text-align:center;width:100%;">
-  <img src="./docs/screenshots/example-female-front.PNG" width="150" alt="body-highlighter" />
-  <img src="./docs/screenshots/example-female-back.PNG" width="150" alt="body-highlighter" />
-  <img src="./docs/screenshots/example-male-front.PNG" width="150" alt="body-highlighter" />
-  <img src="./docs/screenshots/example-male-back.PNG" width="150" alt="body-highlighter" />
-</div>
+### ✨ Version 4.0 Enhancements
+
+- **Progress-Based Color System**: Track both positive and negative progress with automatic color coding
+- **Anatomical Mirroring**: Automatic left/right mirroring when switching between front/back views
+- **Controlled Component API**: Full control over component state
+- **TypeScript Strict Mode**: Complete type safety with strict compiler settings
+- **Development Validation**: Helpful warnings for invalid props (development mode only)
+- **Full Test Coverage**: 95%+ code coverage with comprehensive test suite
+
+### 📊 Progress Tracking (New in v4.0)
+
+Display progress values from -100 (decrease) to +100 (increase) with automatic color coding:
+
+```tsx
+import Body, { DEFAULT_PROGRESS_SCALE } from '@zoran/react-native-body-highlighter';
+
+const data = [
+  { 
+    slug: 'chest', 
+    progress: { value: 50 }  // 50% improvement - automatically green
+  },
+  { 
+    slug: 'biceps', 
+    progress: { value: -25 }  // 25% decrease - automatically red
+  },
+  { 
+    slug: 'abs', 
+    progress: { value: 0 }  // No change - gray
+  },
+];
+
+<Body data={data} />
+```
+
+### 🎨 Custom Color Scales
+
+Define your own color scales for progress visualization:
+
+```tsx
+import { ColorScale } from '@zoran/react-native-body-highlighter';
+
+const customScale: ColorScale = {
+  stops: [
+    { value: -100, color: '#ff0000' },  // Red for negative
+    { value: 0, color: '#ffffff' },     // White for neutral
+    { value: 100, color: '#00ff00' },   // Green for positive
+  ],
+  interpolation: 'linear',
+};
+
+<Body data={data} progressScale={customScale} />
+```
+
+### 🔄 Backward Compatibility
+
+Fully compatible with v3.x intensity-based API:
+
+```tsx
+const data = [
+  { slug: 'chest', intensity: 1 },
+  { slug: 'biceps', intensity: 2 },
+];
+
+<Body 
+  data={data} 
+  colors={['#0984e3', '#74b9ff']} 
+/>
+```
 
 ## Installation
 
-npm
-
 ```bash
-$ npm install react-native-body-highlighter
+npm install @zoran/react-native-body-highlighter
 ```
 
-yarn
+## Basic Usage
 
-```bash
-$ yarn add react-native-body-highlighter
-```
+```tsx
+import Body from '@zoran/react-native-body-highlighter';
 
-## Usage
-
-### Basic example
-
-```jsx
-import { useState } from "react";
-import Body from "react-native-body-highlighter";
-
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Body
-        data={[
-          { slug: "chest", intensity: 1, side: "left" },
-          { slug: "biceps", intensity: 2 },
-        ]}
-        gender="female"
-        side="front"
-        scale={1.7}
-        border="#dfdfdf"
-      />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
-```
-
-<details>
-<summary style="font-size:18px; font-weight: bold;">Complete example</summary>
-<p>
-
-```jsx
-import { StyleSheet, Switch, Text, View } from "react-native";
-import { useState } from "react";
-import Body, { ExtendedBodyPart } from "react-native-body-highlighter";
-
-export default function App() {
-  const [selectedBodyPart, setSelectedBodyPart] =
-    useState <
-    ExtendedBodyPart >
-    {
-      slug: "biceps",
-      intensity: 2,
-      side: "right",
-    };
-  const [side, setSide] = (useState < "back") | ("front" > "front");
-  const [gender, setGender] = (useState < "male") | ("female" > "male");
-
-  const sideSwitch = () =>
-    setSide((previousState) => (previousState === "front" ? "back" : "front"));
-
-  const toggleGenderSwitch = () => {
-    setGender((previousState) =>
-      previousState === "male" ? "female" : "male"
-    );
-  };
+function App() {
+  const data = [
+    { slug: 'chest', intensity: 1 },
+    { slug: 'biceps', intensity: 2 },
+    { slug: 'abs', intensity: 1 },
+  ];
 
   return (
-    <View style={styles.container}>
-      <Body
-        data={[
-          { slug: "chest", intensity: 1, side: "left" },
-          { slug: "biceps", intensity: 1 },
-          selectedBodyPart,
-        ]}
-        onBodyPartPress={(e, side) =>
-          setSelectedBodyPart({ slug: e.slug, intensity: 2, side })
-        }
-        gender={gender}
-        side={side}
-        scale={1.7}
-        border="#dfdfdf"
-      />
-      <View style={styles.switchContainer}>
-        <View style={styles.switch}>
-          <Text>Side ({side})</Text>
-          <Switch onValueChange={sideSwitch} value={side === "front"} />
-        </View>
-        <View style={styles.switch}>
-          <Text>Gender ({gender})</Text>
-          <Switch
-            onValueChange={toggleGenderSwitch}
-            value={gender === "male"}
-          />
-        </View>
-      </View>
-    </View>
+    <Body
+      data={data}
+      colors={['#0984e3', '#74b9ff']}
+      scale={1}
+      side="front"
+      gender="male"
+      onBodyPartPress={(part) => console.log(part.slug)}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  switchContainer: {
-    flexDirection: "row",
-    gap: 30,
-  },
-  switch: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
 ```
-
-</p>
-</details>
 
 ## Props
 
-| Prop                | Required | Purpose                                                                                                       |
-| ------------------- | -------- | ------------------------------------------------------------------------------------------------------------- |
-| data                | Yes      | `BodyPartObject[]` - Array of `BodyPartObject` to highlight                                                   |
-| onBodyPartPress     | No       | `Func` - `(bodyPart: BodyPartObject, side?: left \| right) => {}` Callback called when a user tap a body part |
-| colors              | No       | `string[]` - Defaults to `['#0984e3', '#74b9ff']`                                                             |
-| side                | No       | `front \| back` - Defaults to `front`                                                                         |
-| gender              | No       | `string` - Can be "male" or "female", Defaults to `male`                                                      |
-| scale               | No       | `number` - Defaults to `1`                                                                                    |
-| border              | No       | `string` - Defaults to `#dfdfdf` (`none` to hide the border)                                                  |
-| disabledParts       | No       | `Slug[]` - Contains array of Slugs to be disabled                                                  |
-| hiddenParts         | No       | `Slug[]` - Contains array of Slugs to be hidden (not rendered)                                                  |
-| defaultFill         | No       | `string` - Default fill color for body parts. Defaults to `#3f3f3f`                                           |
-| defaultStroke       | No       | `string` - Default stroke color for body parts. Defaults to `none`                                            |
-| defaultStrokeWidth  | No       | `number` - Default stroke width for body parts. Defaults to `0`                                               |
+### Required
 
-## BodyPart object model
+| Prop | Type | Description |
+|------|------|-------------|
+| `data` | `ExtendedBodyPart[]` | Array of body parts to highlight |
 
-### Accessibility
+### Optional
 
-Each `<Body />` component and its SVG wrappers (`SvgMaleWrapper`, `SvgFemaleWrapper`) are now accessible to screen readers.
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `colors` | `string[]` | `['#0984e3', '#74b9ff']` | Colors for intensity-based highlighting (v3.x) |
+| `progressScale` | `ColorScale` | `DEFAULT_PROGRESS_SCALE` | Color scale for progress values (v4.0) |
+| `scale` | `number` | `1` | Scale factor for the SVG |
+| `side` | `'front' \| 'back'` | `'front'` | Which side of the body to show |
+| `gender` | `'male' \| 'female'` | `'male'` | Gender for body model |
+| `border` | `string \| 'none'` | `'#dfdfdf'` | Border color |
+| `defaultFill` | `string` | `'#3f3f3f'` | Default fill color for unhighlighted parts |
+| `defaultStroke` | `string` | `'none'` | Default stroke color |
+| `defaultStrokeWidth` | `number` | `0` | Default stroke width |
+| `disabledParts` | `Slug[]` | `[]` | Non-interactive body parts |
+| `hiddenParts` | `Slug[]` | `[]` | Parts to hide |
+| `onBodyPartPress` | `function` | - | Callback when a part is pressed |
 
-- Default accessibility labels are automatically provided for gender and side (e.g., `"male-body-front"`, `"female-body-back"`).
-- This improves overall screen reader compatibility by making the visual body component identifiable.
-- Adding accessibility per individual body part would require a deeper refactor of how SVG paths are structured.
+## Body Part Slugs
 
-- #### BodyPartObject: `{ slug: BodyPartName, color?: colorHexValue, intensity?: IntensityNumber, side?: 'left' | 'right', styles?: BodyPartStyles }`
+Available body part identifiers:
 
-- #### BodyPartName: Body part name to highlight (See the list of available body parts below)
+- `abs`, `adductors`, `ankles`, `biceps`, `calves`, `chest`, `deltoids`
+- `feet`, `forearm`, `gluteal`, `hamstring`, `hands`, `hair`, `head`
+- `knees`, `lower-back`, `neck`, `obliques`, `quadriceps`, `tibialis`
+- `trapezius`, `triceps`, `upper-back`
 
-- #### colorHexValue: The Color of specific body part. Accepts HEX string. E.g `#ff0000ff`
+## TypeScript Support
 
-- #### IntensityNumber: Color intensity (if the `colors` property is set: from 1 to `colors.length` + 1. If not, intensity can be 1 or 2)
+Full TypeScript support with strict type checking:
 
-- #### Side (optional): Can be `left`, `right`. Useful for selecting a single part or a pair (Do not set the side if you need to select the pair)
+```tsx
+import Body, { ExtendedBodyPart, Slug, BodyPartProgress } from '@zoran/react-native-body-highlighter';
 
-- #### BodyPartStyles (optional): Custom styling object for individual body parts
-  - `fill?: string` - Custom fill color for this specific body part (overrides color and intensity)
-  - `stroke?: string` - Custom stroke color for this specific body part
-  - `strokeWidth?: number` - Custom stroke width for this specific body part
+const data: ExtendedBodyPart[] = [
+  {
+    slug: 'chest' as Slug,
+    progress: {
+      value: 50,
+      color: '#22c55e', // Optional override
+    } as BodyPartProgress,
+  },
+];
+```
 
-### Styling Priority
-The fill color for each body part is determined in the following priority order (highest to lowest):
-1. `styles.fill` - Per-part custom fill style
-2. `color` - Per-part color property
-3. `intensity` - Color from the `colors` array based on intensity value
-4. `defaultFill` - Global default fill color
+## Credits
 
-## List of body parts
+This is an enhanced fork of the original [react-native-body-highlighter](https://github.com/HichamELBSI/react-native-body-highlighter) by Hicham ELABBASSI.
 
-| BodyParts    | Side                         |
-| ------------ | ---------------------------- |
-| trapezius    | Both                         |
-| triceps      | Both                         |
-| forearm      | Both                         |
-| adductors    | Both                         |
-| calves       | Both                         |
-| hair         | Both                         |
-| neck         | Both                         |
-| deltoids     | Both                         |
-| hands        | Both                         |
-| feet         | Both                         |
-| head         | Both (Front only for female) |
-| ankles       | Both (Front only for female) |
-| tibialis     | Front                        |
-| obliques     | Front                        |
-| chest        | Front                        |
-| biceps       | Front                        |
-| abs          | Front                        |
-| quadriceps   | Front                        |
-| knees        | Front                        |
-| upper-back   | Back                         |
-| lower-back   | Back                         |
-| hamstring    | Back                         |
-| gluteal      | Back                         |
+### Enhancements in v4.0
+
+- Progress-based color system for tracking improvements/declines
+- Automatic color interpolation with customizable scales
+- TypeScript strict mode with comprehensive types
+- Full test coverage (95%+)
+- Development-mode validation
+- Modern build system
+- Improved documentation
+
+## License
+
+MIT
+
+## Author
+
+Zoran (enhancements) - Based on work by Hicham ELABBASSI (original)

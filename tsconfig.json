@@ -1,12 +1,39 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "ES2020",
     "module": "commonjs",
+    "lib": ["ES2020"],
     "jsx": "react-native",
     "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
     "outDir": "./dist",
-    "declaration": true
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
   },
-  "exclude": ["__tests__", "node_modules", "dist"]
+  "include": ["src/**/*"],
+  "exclude": [
+    "__tests__",
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ]
 }
