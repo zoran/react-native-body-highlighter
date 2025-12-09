@@ -121,6 +121,7 @@ export interface BodyProps {
   // Default styles
   defaultFill?: string; // Default: '#f5f5f5'
   defaultStroke?: string; // Default: 'none'
+  skinColor?: string; // Default: same as defaultFill (for hair, hands, feet, face)
   defaultStrokeWidth?: number; // Default: 0
 
   // Part filtering
@@ -145,6 +146,7 @@ const Body: React.FC<BodyProps> = ({
   disabledParts = [],
   hiddenParts = [],
   defaultFill = '#f5f5f5',
+  skinColor = defaultFill,
   defaultStroke = 'none',
   defaultStrokeWidth = 0,
 }) => {
@@ -223,6 +225,12 @@ const Body: React.FC<BodyProps> = ({
       if (bodyPart.slug && disabledParts.includes(bodyPart.slug)) {
         return '#EBEBE4';
       }
+      // Skin parts (hair, hands, feet, face) use skinColor
+      const skinParts = ['hair', 'hand-left', 'hand-right', 'foot-left', 'foot-right', 'head', 'face'];
+      if (bodyPart.slug && skinParts.includes(bodyPart.slug)) {
+        return skinColor;
+      }
+
 
       // Per-part style override
       if (bodyPart.styles?.fill) {
