@@ -119,7 +119,7 @@ export interface BodyProps {
   border?: string | 'none'; // Default: '#dfdfdf'
 
   // Default styles
-  defaultFill?: string; // Default: '#3f3f3f'
+  defaultFill?: string; // Default: '#f5f5f5'
   defaultStroke?: string; // Default: 'none'
   defaultStrokeWidth?: number; // Default: 0
 
@@ -144,7 +144,7 @@ const Body: React.FC<BodyProps> = ({
   border = '#dfdfdf',
   disabledParts = [],
   hiddenParts = [],
-  defaultFill = '#3f3f3f',
+  defaultFill = '#f5f5f5',
   defaultStroke = 'none',
   defaultStrokeWidth = 0,
 }) => {
