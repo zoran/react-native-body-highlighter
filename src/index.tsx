@@ -152,7 +152,7 @@ const Body: React.FC<BodyProps> = ({
   backgroundColor = "transparent",
   defaultFill = '#f5f5f5',
   skinColor = defaultFill,
-  hairColor = defaultFill,
+  hairColor = backgroundColor,
   defaultStroke = 'none',
   defaultStrokeWidth = 0,
 }) => {
@@ -238,7 +238,7 @@ const Body: React.FC<BodyProps> = ({
       }
 
       // Other skin parts use skinColor
-      const skinParts = ['hand-left', 'hand-right', 'foot-left', 'foot-right', 'head', 'face'];
+      const skinParts = ['hands', 'feet', 'head'];
       if (bodyPart.slug && skinParts.includes(bodyPart.slug)) {
         return skinColor;
       }
