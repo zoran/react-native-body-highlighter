@@ -82,7 +82,7 @@ export type Slug = BaseMuscleSlug | ExtendedMuscleSlug;
 
 export type Gender = 'male' | 'female';
 export type Side = 'front' | 'back';
-export type PartSide = 'left' | 'right';
+export type PartSide = 'left' | 'right' | 'both';
 
 export interface BodyPartStyles {
   fill?: string;
@@ -119,7 +119,7 @@ export interface BodyPart {
 export interface ExtendedBodyPart extends BodyPart {
   intensity?: number; // Legacy v3.x API: 1 to colors.length
   progress?: BodyPartProgress; // New v4.0 API: -100 to +100
-  side?: PartSide; // Which side to highlight
+  side?: PartSide; // Which side this data applies to (left/right/both)
   styles?: BodyPartStyles; // Per-part style overrides
 }
 
@@ -194,70 +194,72 @@ const Body: React.FC<BodyProps> = ({
     [defaultFill, defaultStroke, defaultStrokeWidth, muscleStroke]
   );
 
+  type UserSideBucket = {
+    both?: ExtendedBodyPart;
+    left?: ExtendedBodyPart;
+    right?: ExtendedBodyPart;
+  };
+
+  const userDataByBaseSlug = useMemo(() => {
+    const map = new Map<string, UserSideBucket>();
+
+    data.forEach((userPart) => {
+      if (!userPart.slug) return;
+
+      const { base, side: suffixSide } = parseMuscleSlug(String(userPart.slug));
+      const effectiveSide: PartSide = (suffixSide ?? userPart.side ?? 'both') as PartSide;
+
+      const bucket = map.get(base) ?? {};
+
+      const normalized: ExtendedBodyPart = {
+        ...userPart,
+        // Normalize slug so asset lookup uses base slug (assets do not include -left/-right slugs)
+        slug: base as Slug,
+        side: effectiveSide,
+      };
+
+      if (effectiveSide === 'left') {
+        bucket.left = normalized;
+      } else if (effectiveSide === 'right') {
+        bucket.right = normalized;
+      } else {
+        bucket.both = normalized;
+      }
+
+      map.set(base, bucket);
+    });
+
+    return map;
+  }, [data]);
+
   /**
-   * Merge asset body parts with user data
-   * Asset parts have SVG paths, user parts have colors/intensities
+   * Merge asset body part with a single user-side entry
    */
-  const mergedBodyParts = useCallback(
-    (dataSource: ReadonlyArray<BodyPart>) => {
-      const filteredDataSource = dataSource.filter(
-        (part) => !hiddenParts.includes(part.slug!)
-      );
+  const mergeAssetWithUserData = useCallback(
+    (assetPart: BodyPart, userPart?: ExtendedBodyPart): ExtendedBodyPart => {
+      if (!userPart) return assetPart;
 
-      // Create map for O(1) lookup - supports both base slugs and suffixed slugs
-      const userDataMap = new Map<string, ExtendedBodyPart>();
-      data.forEach((userPart) => {
-        if (userPart.slug) {
-          // Parse slug to handle -left/-right suffixes
-          const { base, side } = parseMuscleSlug(userPart.slug);
-          
-          // Store with full slug as key for direct lookup
-          userDataMap.set(userPart.slug, {
-            ...userPart,
-            side: side || userPart.side, // Side from suffix takes precedence
-          });
-          
-          // Also store by base slug if it has a side suffix
-          // This allows base asset slugs to match suffixed user data
-          if (side) {
-            const key = `${base}-${side}`;
-            if (!userDataMap.has(key)) {
-              userDataMap.set(key, {
-                ...userPart,
-                side,
-              });
-            }
-          }
-        }
-      });
+      const merged: ExtendedBodyPart = {
+        ...assetPart,
+        styles: userPart.styles,
+        intensity: userPart.intensity,
+        progress: userPart.progress,
+        color: userPart.color,
+      };
 
-      return filteredDataSource.map((assetPart): ExtendedBodyPart => {
-        const userPart = userDataMap.get(assetPart.slug!);
-        if (!userPart) return assetPart;
+      // Auto-color from intensity if no explicit color
+      if (!merged.styles?.fill && !merged.color && merged.intensity) {
+        merged.color = colors[merged.intensity - 1];
+      }
 
-        const merged: ExtendedBodyPart = {
-          ...assetPart,
-          styles: userPart.styles,
-          intensity: userPart.intensity,
-          progress: userPart.progress,
-          side: userPart.side,
-          color: userPart.color,
-        };
+      // Auto-color from progress value
+      if (merged.progress?.value !== undefined && !merged.progress.color) {
+        merged.progress.color = getProgressColor(merged.progress.value, colorScale);
+      }
 
-        // Auto-color from intensity if no explicit color
-        if (!merged.styles?.fill && !merged.color && merged.intensity) {
-          merged.color = colors[merged.intensity - 1];
-        }
-
-        // TODO v4.0: Auto-color from progress value
-         if (merged.progress?.value !== undefined && !merged.progress.color) {
-           merged.progress.color = getProgressColor(merged.progress.value, colorScale);
-}
-
-        return merged;
-      });
+      return merged;
     },
-    [data, colors, hiddenParts]
+    [colors, colorScale]
   );
 
   /**
@@ -319,66 +321,71 @@ const Body: React.FC<BodyProps> = ({
   /**
    * Render SVG body with all parts
    */
+
+  /**
+   * Render SVG body with all parts
+   */
   const renderBodySvg = useCallback(
     (bodyToRender: ReadonlyArray<BodyPart>) => {
       const SvgWrapper = gender === 'male' ? SvgMaleWrapper : SvgFemaleWrapper;
 
+      const filteredBodyToRender = bodyToRender.filter((part) => !hiddenParts.includes(part.slug!));
+
       return (
         <SvgWrapper side={side} scale={scale} border={border} backgroundColor={backgroundColor}>
-          {mergedBodyParts(bodyToRender).map((bodyPart: ExtendedBodyPart) => {
-            const partStyles = getPartStyles(bodyPart);
-            const fillColor = getColorToFill(bodyPart);
-            const disabled = isPartDisabled(bodyPart.slug);
+          {filteredBodyToRender.map((assetPart: BodyPart) => {
+            const slug = assetPart.slug;
+            const disabled = isPartDisabled(slug);
+            const bucket = slug ? userDataByBaseSlug.get(String(slug)) : undefined;
 
-            // Render common paths (center, no left/right distinction)
-            const commonPaths = (bodyPart.path?.common || []).map((path) => (
+            const mergedBoth = mergeAssetWithUserData(assetPart, bucket?.both);
+            const mergedLeft = mergeAssetWithUserData(mergedBoth, bucket?.left);
+            const mergedRight = mergeAssetWithUserData(mergedBoth, bucket?.right);
+
+            const stylesBoth = getPartStyles(mergedBoth);
+            const stylesLeft = getPartStyles(mergedLeft);
+            const stylesRight = getPartStyles(mergedRight);
+
+            const fillBoth = getColorToFill(mergedBoth);
+            const fillLeft = getColorToFill(mergedLeft);
+            const fillRight = getColorToFill(mergedRight);
+
+            const commonPaths = (assetPart.path?.common || []).map((path) => (
               <Path
                 key={path}
-                onPress={disabled ? undefined : () => onBodyPartPress?.(bodyPart)}
+                onPress={disabled ? undefined : () => onBodyPartPress?.(mergedBoth)}
                 aria-disabled={disabled}
-                id={bodyPart.slug}
-                fill={fillColor ?? partStyles.fill}
-                stroke={partStyles.stroke}
-                strokeWidth={partStyles.strokeWidth}
+                id={slug}
+                fill={fillBoth ?? stylesBoth.fill}
+                stroke={stylesBoth.stroke}
+                strokeWidth={stylesBoth.strokeWidth}
                 d={path}
               />
             ));
 
-            // Render left paths
-            const leftPaths = (bodyPart.path?.left || []).map((path) => {
-              const isOnlyRight = bodyPart.side === 'right';
-              const leftFillColor = isOnlyRight ? defaultFill : fillColor;
+            const leftPaths = (assetPart.path?.left || []).map((path) => (
+              <Path
+                key={path}
+                onPress={disabled ? undefined : () => onBodyPartPress?.(mergedLeft, 'left')}
+                id={slug}
+                fill={fillLeft ?? stylesLeft.fill}
+                stroke={stylesLeft.stroke}
+                strokeWidth={stylesLeft.strokeWidth}
+                d={path}
+              />
+            ));
 
-              return (
-                <Path
-                  key={path}
-                  onPress={disabled ? undefined : () => onBodyPartPress?.(bodyPart, 'left')}
-                  id={bodyPart.slug}
-                  fill={leftFillColor ?? partStyles.fill}
-                  stroke={partStyles.stroke}
-                  strokeWidth={partStyles.strokeWidth}
-                  d={path}
-                />
-              );
-            });
-
-            // Render right paths
-            const rightPaths = (bodyPart.path?.right || []).map((path) => {
-              const isOnlyLeft = bodyPart.side === 'left';
-              const rightFillColor = isOnlyLeft ? defaultFill : fillColor;
-
-              return (
-                <Path
-                  key={path}
-                  onPress={disabled ? undefined : () => onBodyPartPress?.(bodyPart, 'right')}
-                  id={bodyPart.slug}
-                  fill={rightFillColor ?? partStyles.fill}
-                  stroke={partStyles.stroke}
-                  strokeWidth={partStyles.strokeWidth}
-                  d={path}
-                />
-              );
-            });
+            const rightPaths = (assetPart.path?.right || []).map((path) => (
+              <Path
+                key={path}
+                onPress={disabled ? undefined : () => onBodyPartPress?.(mergedRight, 'right')}
+                id={slug}
+                fill={fillRight ?? stylesRight.fill}
+                stroke={stylesRight.stroke}
+                strokeWidth={stylesRight.strokeWidth}
+                d={path}
+              />
+            ));
 
             return [...commonPaths, ...leftPaths, ...rightPaths];
           })}
@@ -390,11 +397,13 @@ const Body: React.FC<BodyProps> = ({
       side,
       scale,
       border,
-      mergedBodyParts,
+      backgroundColor,
+      hiddenParts,
+      userDataByBaseSlug,
+      mergeAssetWithUserData,
       getPartStyles,
       getColorToFill,
       isPartDisabled,
-      defaultFill,
       onBodyPartPress,
     ]
   );

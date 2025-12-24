@@ -5,8 +5,8 @@
 
 import type { Slug, ExtendedBodyPart } from '../index';
 
-// Valid slug values
-const VALID_SLUGS: readonly Slug[] = [
+// Valid base slug values (assets use base slugs only)
+const VALID_BASE_SLUGS = [
   'abs',
   'adductors',
   'ankles',
@@ -32,11 +32,38 @@ const VALID_SLUGS: readonly Slug[] = [
   'upper-back',
 ] as const;
 
+// Base slugs that can be differentiated per-side
+const VALID_BILATERAL_BASE_SLUGS = [
+  'biceps',
+  'calves',
+  'deltoids',
+  'forearm',
+  'gluteal',
+  'hamstring',
+  'quadriceps',
+  'triceps',
+] as const;
+
+
 /**
  * Type guard to check if a string is a valid Slug
  */
 export const isValidSlug = (slug: string): slug is Slug => {
-  return VALID_SLUGS.includes(slug as Slug);
+  // Accept base slugs
+  if ((VALID_BASE_SLUGS as readonly string[]).includes(slug)) return true;
+
+  // Accept suffixed slugs for bilateral muscles (e.g. 'gluteal-left')
+  if (slug.endsWith('-left')) {
+    const base = slug.slice(0, -5);
+    return (VALID_BILATERAL_BASE_SLUGS as readonly string[]).includes(base);
+  }
+
+  if (slug.endsWith('-right')) {
+    const base = slug.slice(0, -6);
+    return (VALID_BILATERAL_BASE_SLUGS as readonly string[]).includes(base);
+  }
+
+  return false;
 };
 
 /**
@@ -53,7 +80,7 @@ export const validateBodyPart = (
   if (part.slug && !isValidSlug(part.slug)) {
     console.warn(
       `[Body] Invalid slug: "${part.slug}". Valid slugs are:`,
-      VALID_SLUGS.join(', ')
+      (VALID_BASE_SLUGS as readonly string[]).join(', ')
     );
   }
 
