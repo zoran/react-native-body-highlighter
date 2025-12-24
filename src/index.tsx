@@ -18,7 +18,7 @@
  * @author Zoran (enhancements)
  * @author Hicham ELABBASSI (original)
  * @license MIT
- * @version 4.0.0
+ * @version 5.0.0
  */
 
 import React, { useCallback, useMemo } from 'react';
@@ -31,11 +31,12 @@ import { bodyFemaleFront } from './assets/bodyFemaleFront';
 import { bodyFemaleBack } from './assets/bodyFemaleBack';
 import { SvgFemaleWrapper } from './components/SvgFemaleWrapper';
 import { getProgressColor, DEFAULT_PROGRESS_SCALE, type ColorScale } from './utils/colorScale';
+import { parseMuscleSlug } from './utils/slugParser';
 import { validateData, validateColors } from './utils/validation';
 
 // ===== TYPE DEFINITIONS =====
 
-export type Slug =
+export type BaseMuscleSlug =
   | 'abs'
   | 'adductors'
   | 'ankles'
@@ -59,6 +60,25 @@ export type Slug =
   | 'trapezius'
   | 'triceps'
   | 'upper-back';
+
+// Bilateral muscle groups that support left/right differentiation
+export type BilateralMuscleSlug =
+  | 'biceps'
+  | 'calves'
+  | 'deltoids'
+  | 'forearm'
+  | 'gluteal'
+  | 'hamstring'
+  | 'quadriceps'
+  | 'triceps';
+
+// Extended slugs with -left and -right suffixes for bilateral muscles
+export type ExtendedMuscleSlug =
+  | `${BilateralMuscleSlug}-left`
+  | `${BilateralMuscleSlug}-right`;
+
+// Complete slug type includes base slugs and extended left/right variants
+export type Slug = BaseMuscleSlug | ExtendedMuscleSlug;
 
 export type Gender = 'male' | 'female';
 export type Side = 'front' | 'back';
@@ -184,11 +204,30 @@ const Body: React.FC<BodyProps> = ({
         (part) => !hiddenParts.includes(part.slug!)
       );
 
-      // Create map for O(1) lookup
-      const userDataMap = new Map<Slug, ExtendedBodyPart>();
+      // Create map for O(1) lookup - supports both base slugs and suffixed slugs
+      const userDataMap = new Map<string, ExtendedBodyPart>();
       data.forEach((userPart) => {
         if (userPart.slug) {
-          userDataMap.set(userPart.slug, userPart);
+          // Parse slug to handle -left/-right suffixes
+          const { base, side } = parseMuscleSlug(userPart.slug);
+          
+          // Store with full slug as key for direct lookup
+          userDataMap.set(userPart.slug, {
+            ...userPart,
+            side: side || userPart.side, // Side from suffix takes precedence
+          });
+          
+          // Also store by base slug if it has a side suffix
+          // This allows base asset slugs to match suffixed user data
+          if (side) {
+            const key = `${base}-${side}`;
+            if (!userDataMap.has(key)) {
+              userDataMap.set(key, {
+                ...userPart,
+                side,
+              });
+            }
+          }
         }
       });
 

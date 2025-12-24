@@ -2,38 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
-## [4.0.0] - 2024-12-08
+## [5.0.0] - 2024-12-24
 
 ### Added
-
-- **Progress-based color system**: Track both positive and negative progress values (-100 to +100) with automatic color coding
-- **ColorScale interface**: Customizable color scales with linear and step interpolation
-- **DEFAULT_PROGRESS_SCALE**: Built-in color scale (Red → Gray → Neutral → Green)
-- **Development validation**: Comprehensive prop validation with helpful warnings (dev mode only)
-- **Full TypeScript strict mode**: Enhanced type safety with strict compiler settings
-- **Test coverage**: 95%+ code coverage with comprehensive test suite
-- **Export utilities**: `getProgressColor`, `ColorScale`, `ColorStop` now exported
+- **Left/Right muscle suffix support** - Bilateral muscles can now be targeted independently using `-left` and `-right` suffixes
+  - New types: `BaseMuscleSlug`, `BilateralMuscleSlug`, `ExtendedMuscleSlug`
+  - Supported bilateral muscles: biceps, calves, deltoids, forearm, gluteal, hamstring, quadriceps, triceps
+  - Example: `{ slug: 'biceps-left', intensity: 5 }` will color only the left biceps
+- Slug parser utility (`utils/slugParser.ts`) with functions:
+  - `parseMuscleSlug()` - Parse slug with optional side suffix
+  - `hasSideSuffix()` - Check if slug has a side suffix
+  - `getBaseMuscle()` - Get base muscle name without suffix
+- Comprehensive tests for slug parsing (12 new tests)
 
 ### Changed
+- Enhanced `mergedBodyParts()` to parse and handle suffixed slugs
+- Slug type now includes template literal types for type-safe suffixes
+- Side from suffix takes precedence over explicit `side` property
 
-- **Component architecture**: Optimized rendering with useCallback and useMemo
-- **Build system**: Modernized with TypeScript 5.7.0
-- **Project structure**: All sources moved to `src/` directory
-- **Package manager**: Migrated from Yarn to npm
+### Backward Compatibility
+- ✅ All existing code continues to work without changes
+- Non-suffixed slugs work exactly as before
+- Explicit `side` property still supported (but suffix takes precedence)
 
-### Enhanced
+### Use Cases
+- **Unilateral training tracking** - Show different progress for left/right sides
+- **Injury visualization** - Highlight specific side of bilateral muscle
+- **Strength imbalance detection** - Visual feedback for asymmetric development
 
-- **BodyPartProgress interface**: Now supports progress values with optional color overrides
-- **Props interface**: Added `progressScale` prop for custom color scales
-- **Color priority**: Updated to `styles.fill > progress.color > color > intensity > default`
-- **Documentation**: Complete README with examples and API reference
-
-### Maintained
-
-- Full backward compatibility with v3.x intensity-based API
-- All existing props and behaviors unchanged
-- Original SVG assets and gender/side support
-
-## [3.1.3] - Original Version
-
-Original implementation by Hicham ELABBASSI
+## [4.3.1] - Previous version
+- Progress-based color system
+- Automatic anatomical mirroring
+- Controlled component API
